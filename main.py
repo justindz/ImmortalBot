@@ -1,9 +1,94 @@
 from discord import Client, Intents, Embed
 from discord_slash import SlashCommand, SlashContext
+from discord_slash.utils.manage_commands import create_option, create_choice
+from datetime import datetime, timedelta
+from quests import quests
 
-bot = Client(intents=Intents.default())
-slash = SlashCommand(bot)
+import secrets
+import pymysql
 
-@slash.slash(name="link")
-async def link(ctx: SlashContext):
-    # TODO stuff
+# Connect to ACE Databases
+accounts_db = pymysql.connect(host=secrets.db_uri,
+                              port=secrets.db_port,
+                              user=secrets.db_user,
+                              password=secrets.db_pwd,
+                              database='ace_auth',
+                              cursorclass=pymysql.cursors.DictCursor)
+
+characters_db = pymysql.connect(host=secrets.db_uri,
+                                port=secrets.db_port,
+                                user=secrets.db_user,
+                                password=secrets.db_pwd,
+                                database='ace_shard',
+                                cursorclass=pymysql.cursors.DictCursor)
+
+# Connect to Discord
+client = Client(intents=Intents.all())
+slash = SlashCommand(client, sync_commands=True)
+servers = secrets.servers
+
+
+# Register Slash Commands
+@slash.slash(name="timer",
+             description="Check a quest timer for toons on the specified account.",
+             options=[
+                 create_option(
+                     name='account',
+                     description='The username for your ACE account.',
+                     option_type=3,
+                     required=True
+                 ),
+                 create_option(
+                     name='quest',
+                     description='The shorthand text for the quest (e.g. "bellas").',
+                     option_type=3,
+                     required=True,
+                     choices=[
+                         create_choice(name='Bellas', value='AugmentationBlankGemAcquired'),
+                         create_choice(name='Diemos', value='PickedUpMarkerBoss10x'),
+                         create_choice(name='Luminance for Blank Aug Gem', value='BlankAugLuminanceTimer_0511'),
+                         create_choice(name='Stipend - General', value='StipendTimer_0812'),
+                         create_choice(name='Stipend - Society', value='SocietyMasterStipendCollectionTimer'),
+                     ]
+                 )
+             ],
+             guild_ids=servers)
+async def timer(ctx: SlashContext, account: str, quest: str):
+    await ctx.author.send(f'Looking up quest timer for {quest} for toons on account {account}...')
+
+    with accounts_db:
+        with accounts_db.cursor() as cursor:
+            sql = 'SELECT `accountId` FROM `account` WHERE `accountName`=%s'
+            cursor.execute(sql, (account.lower().strip(),))
+            result_account_id = cursor.fetchone()
+
+            if result_account_id is not None:
+                account_id = result_account_id['accountId']
+
+                with characters_db:
+                    with characters_db.cursor() as cursor2:
+                        sql = f'SELECT `id`, `name` FROM `character` WHERE `account_Id`={account_id}'
+                        cursor2.execute(sql)
+                        result_characters = cursor2.fetchall()
+
+                        if len(result_characters) < 1:
+                            await ctx.author.send(f'Account {account} has no characters.')
+                        else:
+                            for character in result_characters:
+                                character_id = character['id']
+                                character_name = character['name']
+                                sql = f'SELECT `last_Time_Completed` FROM `character_properties_quest_registry` WHERE `character_Id`={character_id} AND `quest_Name`="{quest}"'
+                                cursor2.execute(sql)
+                                result_timer = cursor2.fetchone()
+
+                                if result_timer is not None:
+                                    quest_timer = datetime.fromtimestamp(result_timer['last_Time_Completed'])
+                                    is_timer_up = quest_timer.today() - quest_timer > timedelta(quests[quest])
+                                    # TODO are we at the 27 day maximum of 4 for Stipends?
+                                    await ctx.author.send(f'{character_name}\'s {quest} timer is {quest_timer}. This timer is {"UP" if is_timer_up else "NOT UP"}.')
+                                else:
+                                    await ctx.author.send(f'{character_name} has no entry for {quest}.')
+            else:
+                await ctx.author.send(f'Account {account} not found on this ACE server.')
+
+client.run(secrets.token)
