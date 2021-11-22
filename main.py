@@ -29,6 +29,12 @@ servers = secrets.servers
 
 
 # Register Slash Commands
+quest_choices = []
+
+for key in quests:
+    quest_choices.append(create_choice(name=quests[key][0], value=key))
+
+
 @slash.slash(name="timer",
              description="Check a quest timer for toons on the specified account.",
              options=[
@@ -43,18 +49,12 @@ servers = secrets.servers
                      description='The shorthand text for the quest (e.g. "bellas").',
                      option_type=3,
                      required=True,
-                     choices=[
-                         create_choice(name='Bellas', value='AugmentationBlankGemAcquired'),
-                         create_choice(name='Diemos', value='PickedUpMarkerBoss10x'),
-                         create_choice(name='Luminance for Blank Aug Gem', value='BlankAugLuminanceTimer_0511'),
-                         create_choice(name='Stipend - General', value='StipendTimer_0812'),
-                         create_choice(name='Stipend - Society', value='SocietyMasterStipendCollectionTimer'),
-                     ]
+                     choices=quest_choices
                  )
              ],
              guild_ids=servers)
 async def timer(ctx: SlashContext, account: str, quest: str):
-    await ctx.author.send(f'Looking up quest timer for {quest} for toons on account {account}...')
+    await ctx.author.send(f'Looking up quest timer for {quests[quest][0]} for toons on account {account}:')
 
     with accounts_db:
         with accounts_db.cursor() as cursor:
@@ -83,11 +83,11 @@ async def timer(ctx: SlashContext, account: str, quest: str):
 
                                 if result_timer is not None:
                                     quest_timer = datetime.fromtimestamp(result_timer['last_Time_Completed'])
-                                    is_timer_up = quest_timer.today() - quest_timer > timedelta(quests[quest])
+                                    is_timer_up = quest_timer.today() - quest_timer > timedelta(quests[quest][1])
                                     # TODO are we at the 27 day maximum of 4 for Stipends?
-                                    await ctx.author.send(f'{character_name}\'s {quest} timer is {quest_timer}. This timer is {"UP" if is_timer_up else "NOT UP"}.')
+                                    await ctx.author.send(f'- {character_name} {quest_timer} {":green_circle:" if is_timer_up else ":red_square:"}')
                                 else:
-                                    await ctx.author.send(f'{character_name} has no entry for {quest}.')
+                                    await ctx.author.send(f'- {character_name} N/A')
             else:
                 await ctx.author.send(f'Account {account} not found on this ACE server.')
 
