@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from quests import quests
 
 import secrets
+import weapon_tinkering
 import pymysql
 
 # Connect to ACE Databases
@@ -134,5 +135,55 @@ async def rent(ctx: SlashContext, account: str):
                                 await ctx.author.send(f'Account {account} does not appear to have a rental property.')
             else:
                 await ctx.author.send(f'Account {account} not found on this ACE server.')
+
+
+@slash.slash(name="ig",
+             description="Calculate best 9 iron/granite tinks on a rend weapon, assuming BD 8 and basic augs.",
+             options=[
+                 create_option(
+                     name='min',
+                     description='The unbuffed minimum damage on the weapon.',
+                     option_type=10,
+                     required=True
+                 ),
+                 create_option(
+                     name='max',
+                     description='The unbuffed maximum damage on the weapon.',
+                     option_type=10,
+                     required=True
+                 ),
+                 create_option(
+                     name='cantrip',
+                     description='The Blood Thirst cantrip on the weapon.',
+                     option_type=4,
+                     required=True,
+                     choices=[
+                         create_choice(name='None', value=0),
+                         create_choice(name='Minor', value=2),
+                         create_choice(name='Major', value=4),
+                         create_choice(name='Epic', value=7),
+                         create_choice(name='Legendary', value=10),
+                     ]
+                 )
+             ],
+             guild_ids=servers)
+async def ig(ctx: SlashContext, min: float, max: float, cantrip: int):
+    # await ctx.send(f'For this weapon, the starting average damage is {weapon_tinkering.starting_average_damage(min, max, 24.0, float(cantrip))} and starting variance is {weapon_tinkering.starting_weapon_variance(min, max)}%')
+
+    best_average_damage = 0
+    best_iron = 0
+    best_granite = 0
+
+    for i in range(0, 10):
+        average_damage = weapon_tinkering.average_damage(min, max, float(cantrip), i)
+        iron = i
+        granite = 9 - i
+
+        if average_damage >= best_average_damage:
+            best_average_damage = average_damage
+            best_iron = iron
+            best_granite = granite
+
+    await ctx.send(f'For this weapon, the best average damage is {best_average_damage} using {best_iron} iron and {best_granite} granite.')
 
 client.run(secrets.token)
