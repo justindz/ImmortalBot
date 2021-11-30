@@ -21,6 +21,10 @@ The currently supported quests are:
 
 To suggest more quest timers, please use the GitHub issues or find the author (justindz) on the DrunkenFell or ACEmulator Discord servers.
 
+### /rent account:
+
+The bot will look up the rent due timer for the specified account. This may have odd results if rent timers have been disabled on your ACE server.
+
 ### /ig min: max: cantrip:
 
 The bot will calculate and recommand the optimum combination of Iron and Granite (hence, ig) tinkers based on the provided starting weapon characteristics. For calculation purposes, the bot uses the following assumptions:
