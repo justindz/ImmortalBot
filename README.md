@@ -76,12 +76,14 @@ OAuth2 Bot Permissions:
 * Create a file named "secrets.py" in the bot's directory (same location as main.py, quests.py, and weapon_tinkering.py) to house connection information for the bot
 * If you plan to use source control to customize your bot or submit pull requests, please make sure to gitignore your secrets.py file so you do not share your private connection info!
 * Add the following variables to secrets.py (order does not matter, syntax is standard Python):
-** token = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' <-- a long string provided by Discord when you successfully complete Discord Setup
-** servers = [1234567890] <-- the integer IDs of the Discord server(s) you want the bot to join, which needs to be an array even if a single value
-** db_uri = 'localhost' <-- the address of the ACE server as a string, which may be localhost/127.0.0.1 or an internet address depending on where you run the bot
-** db_port = 3306 <-- your ACE DB port number as an integer
-** db_user = 'immortalbot' <-- recommended to create a unique read-only DB user for the bot, but any user with read permissions should work
-** db_pwd = 'password' <-- but don't use this password!
+```
+token = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' # a long string provided by Discord when you successfully complete Discord Setup
+servers = [1234567890] # the integer IDs of the Discord server(s) you want the bot to join, which needs to be an array even if a single value
+db_uri = 'localhost' # the address of the ACE server as a string, which may be localhost/127.0.0.1 or an internet address depending on where you run the bot
+db_port = 3306 # your ACE DB port number as an integer
+db_user = 'immortalbot' # recommended to create a unique read-only DB user for the bot, but any user with read permissions should work
+db_pwd = 'password' # please don't use this password!
+```
 
 ### Bot Deployment
 
