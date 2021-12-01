@@ -39,10 +39,10 @@ These assumptions produce consistent results for most characters below an extrem
 
 ## Dependencies
 
-ImmortalBot is written in Python (currently 3.10)
-PyMySQL 1.0.2 is used to connect to the ACE database
-discord.py 1.7.3 is used for Discord interaction
-discord-py-interactions 3.0.2 adds support for Discord's slash commands
+* ImmortalBot is written in Python (currently 3.10)
+* PyMySQL 1.0.2 is used to connect to the ACE database
+* discord.py 1.7.3 is used for Discord interaction
+* discord-py-interactions 3.0.2 adds support for Discord's slash commands
 
 ## Requirements
 
